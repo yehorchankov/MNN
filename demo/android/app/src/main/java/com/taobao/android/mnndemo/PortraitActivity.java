@@ -143,7 +143,7 @@ public class PortraitActivity extends AppCompatActivity {
             stub.inflate();
 
             SurfaceView drawView = (SurfaceView) findViewById(R.id.lines_view);
-            drawView.setZOrderOnTop(true);
+            drawView.setZOrderOnTop(false);
             drawView.getHolder().setFormat(PixelFormat.TRANSPARENT);
             mDrawSurfaceHolder = drawView.getHolder();
 
