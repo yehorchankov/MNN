@@ -127,9 +127,9 @@ public class ImageActivity extends AppCompatActivity implements View.OnClickList
 
             final StringBuilder sb = new StringBuilder();
             for (Map.Entry<Integer, Float> entry : maybes) {
-                sb.append("物体:");
+                sb.append("Class: ");
                 sb.append(mMobileTaiWords.get(entry.getKey()));
-                sb.append(" 自信度:");
+                sb.append(" | Conf: ");
                 sb.append(entry.getValue());
                 sb.append("\n");
             }
