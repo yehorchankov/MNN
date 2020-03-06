@@ -50,10 +50,13 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
     private final String SqueezeModelFileName = "SqueezeNet/v1.1/squeezenet_v1.1.caffe.mnn";
     private final String SqueezeWordsFileName = "SqueezeNet/squeezenet.txt";
 
+    private final String UltraNetModelFileName = "UltraNet/slim-320.mnn";
+
     private String mMobileModelPath;
     private List<String> mMobileTaiWords;
     private String mSqueezeModelPath;
     private List<String> mSqueezeTaiWords;
+    private String mUltraModelPath;
 
     private int mSelectedModelIndex;// current using modle
     private final MNNNetInstance.Config mConfig = new MNNNetInstance.Config();// session config
@@ -74,6 +77,11 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
 
     private final int SqueezeInputWidth = 227;
     private final int SqueezeInputHeight = 227;
+
+    private final int UltraInputWidth = 320;
+    private final int UltraInputHeight = 240;
+
+    private long mFd;
 
     HandlerThread mThread;
     Handler mHandle;
@@ -131,6 +139,14 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+
+        mUltraModelPath = getCacheDir() + "slim-320.mnn";
+        try {
+            Common.copyAssetResource2File(getBaseContext(), UltraNetModelFileName, mUltraModelPath);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 
@@ -164,6 +180,8 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
         dimensions[0] = 1; // force batch = 1  NCHW  [batch, channels, height, width]
         mInputTensor.reshape(dimensions);
         mSession.reshape();
+
+        mFd = mSession.initFd(320, 240, 3);
 
         mLockUIRender.set(false);
     }
