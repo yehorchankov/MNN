@@ -65,4 +65,10 @@ public class MNNNetNative {
     protected static native boolean nativeConvertBufferToTensor(byte[] bufferData, int width, int height, long tensorPtr,
                                                                 int srcFormat, int destFormat, int filterType, int wrap, float[] matrixValue, float[] mean, float[] normal);
 
+    //Face detector helpers
+    protected static native long nativeInitFaceDetector(int imageWidth , int imageHeight, int imageChannels);
+
+    //Do face detect
+    protected static native float[] nativeFaceDetect(long faceDetector, float[] scores, float[] boxes);
+
 }

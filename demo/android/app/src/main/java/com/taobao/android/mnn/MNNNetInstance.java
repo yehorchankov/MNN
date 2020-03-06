@@ -107,6 +107,14 @@ public class MNNNetInstance {
             MNNNetNative.nativeRunSession(mNetInstance, mSessionInstance);
         }
 
+        public long initFd(int w, int h, int c) {
+            return MNNNetNative.nativeInitFaceDetector(w, h, c);
+        }
+
+        public float[] detectFaces(long faceDetectorPtr, float[] scores, float[] boxes) {
+            return MNNNetNative.nativeFaceDetect(faceDetectorPtr, scores, boxes);
+        }
+
         public Tensor[] runWithCallback(String[] names) {
             long[] tensorPtr = new long[names.length];
 
