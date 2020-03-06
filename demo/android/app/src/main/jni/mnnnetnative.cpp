@@ -77,6 +77,11 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_taobao_android_mnn_MNNNetNative_nati
         config.path.outputs = saveNamesVector;
     }
 
+    MNN::BackendConfig backendConfig;
+    backendConfig.precision = (MNN::BackendConfig::PrecisionMode) 2;
+    config.backendConfig = &backendConfig;
+
+
     auto session = ((MNN::Interpreter *)netPtr)->createSession(config);
     return (jlong)session;
 }
