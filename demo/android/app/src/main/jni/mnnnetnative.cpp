@@ -13,6 +13,10 @@
 #include <MNN/Interpreter.hpp>
 #include <MNN/Tensor.hpp>
 #include <memory>
+#include "ultraface.hpp"
+
+#define TAG "UltraNet"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_taobao_android_mnn_MNNNetNative_nativeCreateNetFromFile(JNIEnv *env, jclass type, jstring modelName_) {
@@ -432,4 +436,65 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_taobao_android_mnn_MNNNetNative_n
     process->convert((const unsigned char *)pixels, bitmapInfo.width, bitmapInfo.height, 0, tensor);
     AndroidBitmap_unlockPixels(env, srcBitmap);
     return JNI_TRUE;
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_taobao_android_mnn_MNNNetNative_nativeInitFaceDetector(JNIEnv *env, jclass clazz, jint imageWidth,
+                                                                jint imageHeight, jint imageChannels) {
+    // One instance of the face detector can be shared through multiple sessions
+    FaceDetection* fd = new FaceDetection(imageWidth, imageHeight, imageChannels);
+    return (jlong) fd;
+}
+
+
+extern "C"
+JNIEXPORT jfloatArray JNICALL
+Java_com_taobao_android_mnn_MNNNetNative_nativeFaceDetect(JNIEnv *env, jclass clazz, jlong faceDetector, jfloatArray scores_, jfloatArray boxes_) {
+
+    // Get outputs
+    std::vector<std::string> outputNames = {"scores", "boxes"};
+    std::vector<std::vector<float>> outFeatures;
+
+    jfloat* scoresPtr = env->GetFloatArrayElements(scores_, NULL);
+    auto scoresLen = env->GetArrayLength(scores_);
+    std::vector<float> scores(scoresLen);
+    for (int i = 0; i < scoresLen; i++) {
+        scores[i] = scoresPtr[i];
+    }
+    outFeatures.push_back(scores);
+
+
+    jfloat* boxesPtr = env->GetFloatArrayElements(boxes_, NULL);
+    auto boxesLen = env->GetArrayLength(boxes_);
+    std::vector<float> boxes(boxesLen);
+    for (int i = 0; i < boxesLen; i++) {
+        boxes[i] = boxesPtr[i];
+    }
+    outFeatures.push_back(boxes);
+
+
+    auto fd = (FaceDetection*) faceDetector;
+    // Post processing
+    std::vector<FaceInfo> bboxCollection;
+    std::vector<FaceInfo> faceList;
+    fd->generateBboxes(bboxCollection, outFeatures[0], outFeatures[1]);
+    fd->nms(bboxCollection, faceList);
+
+    int length = (int) faceList.size() * 5;
+    float *floatResult = new float[length];
+
+    for (int i = 0; i < faceList.size(); i++) {
+        floatResult[i*5] = faceList[i].x1;
+        floatResult[i*5 + 1] = faceList[i].y1;
+        floatResult[i*5 + 2] = faceList[i].x2;
+        floatResult[i*5 + 3] = faceList[i].y2;
+        floatResult[i*5 + 4] = faceList[i].score;
+    }
+
+    auto result_ = env->NewFloatArray(length);
+    env->SetFloatArrayRegion(result_, 0, length, floatResult);
+    delete [] floatResult;
+
+    return result_;
 }
