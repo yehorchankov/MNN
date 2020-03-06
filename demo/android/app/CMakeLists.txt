@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(lib_DIR ${CMAKE_SOURCE_DIR}/libs)
 include_directories(${CMAKE_SOURCE_DIR}/includes)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/jni)
 
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
@@ -19,7 +20,7 @@ set_target_properties(
         ${lib_DIR}/${ANDROID_ABI}/libMNN.so
 )
 
-file(GLOB_RECURSE CPP_SRCS src/main/jni/*.cpp )
+file(GLOB_RECURSE CPP_SRCS src/main/jni/* )
 add_library( mnncore SHARED ${CPP_SRCS} )
 
 find_library( log-lib log )
