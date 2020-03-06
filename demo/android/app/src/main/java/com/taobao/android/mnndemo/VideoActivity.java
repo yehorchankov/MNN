@@ -165,6 +165,8 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
             modelPath = mMobileModelPath;
         } else if (mSelectedModelIndex == 1) {
             modelPath = mSqueezeModelPath;
+        } else if (mSelectedModelIndex == 2) {
+            modelPath = mUltraModelPath;
         }
 
         // create net instance
