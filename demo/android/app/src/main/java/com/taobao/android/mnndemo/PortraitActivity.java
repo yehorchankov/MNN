@@ -97,9 +97,8 @@ public class PortraitActivity extends AppCompatActivity {
         netInputHeight = mInputTensor.getDimensions()[2];
         netInputWidth = mInputTensor.getDimensions()[3];
 
-        netOutputHeight = mOutputTensor.getDimensions()[2];
-        netOutputWidth = mOutputTensor.getDimensions()[3];
-
+        netOutputHeight = mOutputTensor.getDimensions()[mOutputTensor.getDimensions().length-2];
+        netOutputWidth = mOutputTensor.getDimensions()[mOutputTensor.getDimensions().length-1];
     }
 
 
