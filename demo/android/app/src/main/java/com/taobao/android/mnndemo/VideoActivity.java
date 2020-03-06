@@ -334,11 +334,43 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
 
                                 // matrix transform: dst to src
                                 final Matrix matrix = new Matrix();
-                                matrix.postScale(SqueezeInputWidth / (float) (float) imageWidth, SqueezeInputHeight / (float) imageHeight);
+                                matrix.postScale(SqueezeInputWidth / (float) imageWidth, SqueezeInputHeight / (float) imageHeight);
                                 matrix.postRotate(needRotateAngle, SqueezeInputWidth / 2, SqueezeInputWidth / 2);
                                 matrix.invert(matrix);
 
                                 MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
+                            } else if (mSelectedModelIndex == 2) {
+                                // TODO: prepare image for UltraNet
+                                config.mean = new float[] {127f, 127f, 127f};
+                                config.normal = new float[] {1.0f / 128.0f, 1.0f / 128.0f, 1.0f / 128.0f};
+                                config.source = MNNImageProcess.Format.YUV_NV21;// input source format
+                                config.dest = MNNImageProcess.Format.BGR;// input data format
+                                config.wrap = MNNImageProcess.Wrap.REPEAT;
+                                config.filter = MNNImageProcess.Filter.BILINEAL;
+
+                                // matrix transform: dst to src
+                                Matrix matrix = new Matrix();
+                                matrix.setScale(1.0f / imageWidth, 1.0f / imageHeight);
+                                matrix.postRotate(needRotateAngle, 0.5f, 0.5f);
+                                matrix.postScale(UltraInputWidth, UltraInputHeight);
+                                matrix.invert(matrix);
+
+                                MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
+
+                                mSession.run();
+
+                                MNNNetInstance.Session.Tensor scoresOutput = mSession.getOutput("scores");
+                                float[] scoresResult = scoresOutput.getFloatData();// get float results
+
+                                MNNNetInstance.Session.Tensor boxesOutput = mSession.getOutput("boxes");
+                                float[] boxesResult = boxesOutput.getFloatData();// get float results
+
+                                float[] faces = mSession.detectFaces(mFd, scoresResult, boxesResult);
+
+                                // TODO: render faces
+
+                                int i = 0;
+                                return;
                             }
 
                             final long startTimestamp = System.nanoTime();
