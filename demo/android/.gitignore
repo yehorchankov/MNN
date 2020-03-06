@@ -9,3 +9,5 @@
 /captures
 .externalNativeBuild
 /app/build
+/app/src/jniLibs/arm64-v8a/*.out
+/app/src/jniLibs/armeabi-v7a/*.out
