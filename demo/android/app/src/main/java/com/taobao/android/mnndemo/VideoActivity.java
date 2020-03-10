@@ -25,9 +25,11 @@ import android.view.View;
 import android.view.ViewStub;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +37,8 @@ import com.taobao.android.mnn.MNNForwardType;
 import com.taobao.android.mnn.MNNImageProcess;
 import com.taobao.android.mnn.MNNNetInstance;
 import com.taobao.android.utils.Common;
+import com.taobao.android.utils.ShiftList;
+import com.taobao.android.utils.Statistics;
 import com.taobao.android.utils.TxtFileReader;
 
 import java.text.DecimalFormat;
@@ -80,6 +84,11 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
     private TextView mSecondResult;
     private TextView mThirdResult;
     private TextView mTimeTextView;
+
+    private ShiftList<Double> totalTime;
+    private ShiftList<Double> inferenceTime;
+    private ShiftList<Double> postprocessTime;
+    private final int maxListCapacity = 30;
 
     private final int MobileInputWidth = 224;
     private final int MobileInputHeight = 224;
@@ -392,13 +401,17 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                                 final float[] faces = mSession.detectFaces(mFd, scoresResult, boxesResult);
                                 final long endPostprocessingTimestamp = System.nanoTime();
 
+                                totalTime.add((endPostprocessingTimestamp - startTimestamp) / 1000000.0);
+                                inferenceTime.add((endInferenceTimestamp - startTimestamp) / 1000000.0);
+                                postprocessTime.add((endPostprocessingTimestamp - endInferenceTimestamp) / 1000000.0);
+
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         mTimeTextView.setText("");
-                                        mFirstResult.setText(String.format("Total time: %.5f ms", (endPostprocessingTimestamp - startTimestamp) / 1000000.0f));
-                                        mSecondResult.setText(String.format("Inference: %.5f ms", (endInferenceTimestamp - startTimestamp) / 1000000.0f));
-                                        mThirdResult.setText(String.format("Postprocessing: %.5f ms", (endPostprocessingTimestamp - endInferenceTimestamp) / 1000000.0f));
+                                        mFirstResult.setText(String.format("Total time: %.5f ms", Statistics.mean(totalTime)));
+                                        mSecondResult.setText(String.format("Inference: %.5f ms", Statistics.mean(inferenceTime)));
+                                        mThirdResult.setText(String.format("Postprocessing: %.5f ms", Statistics.mean(postprocessTime)));
 
                                         Canvas canvas = mFaceSurfaceHolder.lockCanvas();
 
@@ -601,6 +614,9 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
             }
         }
 
+        totalTime = new ShiftList<Double>(maxListCapacity);
+        inferenceTime = new ShiftList<Double>(maxListCapacity);
+        postprocessTime = new ShiftList<Double>(maxListCapacity);
 
         mLockUIRender.set(true);
         clearUIForPrepareNet();
