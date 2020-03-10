@@ -3,8 +3,13 @@ package com.taobao.android.mnndemo;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Handler;
@@ -14,6 +19,8 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.OrientationEventListener;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewStub;
 import android.view.WindowManager;
@@ -62,6 +69,8 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
     private final MNNNetInstance.Config mConfig = new MNNNetInstance.Config();// session config
 
     private CameraView mCameraView;
+    private SurfaceView mFaceView;
+    private SurfaceHolder mFaceSurfaceHolder;
     private Spinner mForwardTypeSpinner;
     private Spinner mThreadNumSpinner;
     private Spinner mModelSpinner;
@@ -269,6 +278,10 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
         stub.inflate();
 
         mCameraView = (CameraView) findViewById(R.id.camera_view);
+        mFaceView = (SurfaceView) findViewById(R.id.faceView);
+        mFaceSurfaceHolder = mFaceView.getHolder();
+        mFaceView.setZOrderOnTop(false);
+        mFaceSurfaceHolder.setFormat(PixelFormat.TRANSPARENT);
 
         mCameraView.setPreviewCallback(new CameraView.PreviewCallback() {
             @Override
@@ -357,7 +370,9 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
 
                                 MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
 
+                                final long startTimestamp = System.nanoTime();
                                 mSession.run();
+                                final long endInferenceTimestamp = System.nanoTime();
 
                                 MNNNetInstance.Session.Tensor scoresOutput = mSession.getOutput("scores");
                                 float[] scoresResult = scoresOutput.getFloatData();// get float results
@@ -365,11 +380,53 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                                 MNNNetInstance.Session.Tensor boxesOutput = mSession.getOutput("boxes");
                                 float[] boxesResult = boxesOutput.getFloatData();// get float results
 
-                                float[] faces = mSession.detectFaces(mFd, scoresResult, boxesResult);
+                                final float[] faces = mSession.detectFaces(mFd, scoresResult, boxesResult);
+                                final long endPostprocessingTimestamp = System.nanoTime();
 
-                                // TODO: render faces
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mTimeTextView.setText("");
+                                        mFirstResult.setText(String.format("Total time: %.5f ms", (endPostprocessingTimestamp - startTimestamp) / 1000000.0f));
+                                        mSecondResult.setText(String.format("Inference: %.5f ms", (endInferenceTimestamp - startTimestamp) / 1000000.0f));
+                                        mThirdResult.setText(String.format("Postprocessing: %.5f ms", (endPostprocessingTimestamp - endInferenceTimestamp) / 1000000.0f));
 
-                                int i = 0;
+                                        Canvas canvas = mFaceSurfaceHolder.lockCanvas();
+
+                                        if (canvas == null) {
+                                            return;
+                                        }
+
+                                        int canvasWidth = canvas.getWidth();
+                                        int canvasHeight = canvas.getHeight();
+
+                                        canvas.drawColor( 0, PorterDuff.Mode.CLEAR );
+
+                                        Paint rectPaint = new Paint();
+                                        rectPaint.setColor(Color.CYAN);
+                                        rectPaint.setStyle(Paint.Style.STROKE);
+                                        rectPaint.setStrokeWidth(5);
+                                        rectPaint.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
+
+                                        for (int i = 0; i < faces.length / 5; i++) {
+                                            float x1 = faces[i*5] / UltraInputWidth * canvasWidth;
+                                            float y1 = faces[i*5 + 1] / UltraInputHeight * canvasHeight;
+                                            float x2 = faces[i*5 + 2] / UltraInputWidth * canvasWidth;
+                                            float y2 = faces[i*5 + 3] / UltraInputHeight * canvasHeight;
+                                            float scores = faces[i*5 + 4];
+
+                                            try {
+                                                canvas.drawRect(x1, y1, x2, y2, rectPaint);
+                                                canvas.drawText(String.format("%.3f %", scores), x1, y1, rectPaint);
+                                            } catch (Throwable t) {
+                                                Log.e(Common.TAG, "Draw result error:" + t);
+                                            }
+                                        }
+
+                                        mFaceSurfaceHolder.unlockCanvasAndPost(canvas);
+                                    }
+                                });
+
                                 return;
                             }
 
