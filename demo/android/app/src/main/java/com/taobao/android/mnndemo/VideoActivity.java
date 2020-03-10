@@ -283,6 +283,15 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
         mFaceView.setZOrderOnTop(false);
         mFaceSurfaceHolder.setFormat(PixelFormat.TRANSPARENT);
 
+        Switch camSwitch = (Switch) findViewById(R.id.camSwitch);
+        camSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mCameraView.switchCamera();
+            }
+        });
+
+
         mCameraView.setPreviewCallback(new CameraView.PreviewCallback() {
             @Override
             public void onGetPreviewOptimalSize(int optimalWidth, int optimalHeight) {
