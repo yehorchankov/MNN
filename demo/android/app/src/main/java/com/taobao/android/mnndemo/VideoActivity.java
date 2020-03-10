@@ -406,7 +406,10 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                                         rectPaint.setColor(Color.CYAN);
                                         rectPaint.setStyle(Paint.Style.STROKE);
                                         rectPaint.setStrokeWidth(5);
-                                        rectPaint.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
+
+                                        Paint textPaint = new Paint();
+                                        textPaint.setColor(Color.CYAN);
+                                        textPaint.setTextSize(30);
 
                                         for (int i = 0; i < faces.length / 5; i++) {
                                             float x1 = faces[i*5] / UltraInputWidth * canvasWidth;
@@ -417,7 +420,7 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
 
                                             try {
                                                 canvas.drawRect(x1, y1, x2, y2, rectPaint);
-                                                canvas.drawText(String.format("%.3f %", scores), x1, y1, rectPaint);
+                                                canvas.drawText(String.format("%.3f", scores), x1, y1, textPaint);
                                             } catch (Throwable t) {
                                                 Log.e(Common.TAG, "Draw result error:" + t);
                                             }
@@ -428,6 +431,14 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                                 });
 
                                 return;
+                            }
+
+                            try {
+                                Canvas canvas = mFaceSurfaceHolder.lockCanvas();
+                                canvas.drawColor( 0, PorterDuff.Mode.CLEAR );
+                                mFaceSurfaceHolder.unlockCanvasAndPost(canvas);
+                            } catch (Throwable t) {
+                                Log.e(Common.TAG, "Clear canvas error:" + t);
                             }
 
                             final long startTimestamp = System.nanoTime();
