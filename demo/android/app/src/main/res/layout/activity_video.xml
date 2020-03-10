@@ -10,5 +10,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <SurfaceView
+        android:id="@+id/faceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#00FFFFFF" />
 
 </FrameLayout>
