@@ -67,6 +67,7 @@
                 android:background="#e3f9fd"
                 android:entries="@array/demo_list"
                 android:spinnerMode="dropdown" />
+
         </RelativeLayout>
 
 
@@ -74,6 +75,13 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:orientation="horizontal">
+
+            <Switch
+                android:id="@+id/camSwitch"
+                android:layout_width="57dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Cam" />
 
             <Spinner
                 android:id="@+id/forwardTypeSpinner"
@@ -97,13 +105,12 @@
 
             <Spinner
                 android:id="@+id/modelTypeSpinner"
-                android:layout_width="wrap_content"
+                android:layout_width="83dp"
                 android:layout_height="match_parent"
                 android:layout_centerHorizontal="true"
                 android:layout_weight="1"
                 android:background="#f2f9f1"
-                android:entries="@array/model_list">
-            </Spinner>
+                android:entries="@array/model_list"></Spinner>
         </LinearLayout>
     </LinearLayout>
 </RelativeLayout>

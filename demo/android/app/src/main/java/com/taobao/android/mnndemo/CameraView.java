@@ -27,6 +27,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, C
     private PreviewCallback mPreviewCallback;
     private int mOrientationAngle;
     private int previewCallbackCount;
+    private int mCameraId;
 
     public CameraView(Context context) {
         this(context, null);
@@ -39,24 +40,32 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, C
         holder.addCallback(this);
     }
 
+    public void switchCamera() {
+        openCamera(getHolder(), mCameraId == Camera.CameraInfo.CAMERA_FACING_FRONT ? Camera.CameraInfo.CAMERA_FACING_BACK : Camera.CameraInfo.CAMERA_FACING_FRONT);
+    }
+
     public void setPreviewCallback(CameraView.PreviewCallback previewCallback) {
         mPreviewCallback = previewCallback;
     }
 
-    private void openCamera(SurfaceHolder holder) {
+    private void openCamera(SurfaceHolder holder, int cameraId) {
         // release Camera, if not release camera before call camera, it will be locked
         releaseCamera();
 
-        mCamera = Camera.open();
+        mCameraId = cameraId;
+        mCamera = Camera.open(cameraId);
 
-        setCameraDisplayOrientation((Activity) getContext(), Camera.CameraInfo.CAMERA_FACING_BACK, mCamera);
+        setCameraDisplayOrientation((Activity) getContext(), mCameraId, mCamera);
 
         mParams = mCamera.getParameters();
         mPreviewSize = getPropPreviewSize(mParams.getSupportedPreviewSizes(), 800, 800);
         mParams.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
 
         mParams.setPreviewFormat(ImageFormat.NV21);
-        mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+
+        if (mCameraId == Camera.CameraInfo.CAMERA_FACING_BACK) {
+            mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+        }
 
         mCamera.setParameters(mParams);
 
@@ -98,7 +107,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, C
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         Log.i("AiNNDemo", "surfaceCreated");
 
-        openCamera(surfaceHolder);
+        openCamera(surfaceHolder, Camera.CameraInfo.CAMERA_FACING_BACK);
     }
 
     @Override
@@ -150,7 +159,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, C
     }
 
     public void onResume() {
-        openCamera(getHolder());
+        openCamera(getHolder(), mCameraId);
     }
 
     public void onPause() {
