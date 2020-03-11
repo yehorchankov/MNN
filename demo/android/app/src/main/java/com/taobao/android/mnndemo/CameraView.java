@@ -44,6 +44,10 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback, C
         openCamera(getHolder(), mCameraId == Camera.CameraInfo.CAMERA_FACING_FRONT ? Camera.CameraInfo.CAMERA_FACING_BACK : Camera.CameraInfo.CAMERA_FACING_FRONT);
     }
 
+    public boolean isFrontCamera() {
+        return mCameraId == Camera.CameraInfo.CAMERA_FACING_FRONT;
+    }
+
     public void setPreviewCallback(CameraView.PreviewCallback previewCallback) {
         mPreviewCallback = previewCallback;
     }
