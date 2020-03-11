@@ -504,7 +504,15 @@ Java_com_taobao_android_mnn_MNNNetNative_nativeFaceDetect(JNIEnv *env, jclass cl
     }
 
     auto result_ = env->NewFloatArray(length);
+
+    // Cleanup
     env->SetFloatArrayRegion(result_, 0, length, floatResult);
+    env->ReleaseFloatArrayElements(scores_, scoresPtr, 0);
+    env->ReleaseFloatArrayElements(boxes_, boxesPtr, 0);
+    std::vector<float>().swap(scores);
+    std::vector<float>().swap(boxes);
+    std::vector<FaceInfo>().swap(bboxCollection);
+    std::vector<FaceInfo>().swap(faceList);
     delete [] floatResult;
 
     return result_;
