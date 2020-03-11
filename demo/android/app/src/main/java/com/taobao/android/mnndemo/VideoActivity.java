@@ -323,7 +323,6 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                     return;
                 }
 
-
                 if (mDrop.get()) {
                     Log.w(TAG, "drop frame , net running too slow !!");
                 } else {
@@ -343,35 +342,10 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                              *  convert data to input tensor
                              */
                             final MNNImageProcess.Config config = new MNNImageProcess.Config();
-                            if (mSelectedModelIndex == 0) {
+
+                            // Handle UltraNet here
+                            if (mSelectedModelIndex == 2) {
                                 // normalization params
-                                config.mean = new float[]{103.94f, 116.78f, 123.68f};
-                                config.normal = new float[]{0.017f, 0.017f, 0.017f};
-                                config.source = MNNImageProcess.Format.YUV_NV21;// input source format
-                                config.dest = MNNImageProcess.Format.BGR;// input data format
-
-                                // matrix transform: dst to src
-                                Matrix matrix = new Matrix();
-                                matrix.postScale(MobileInputWidth / (float) imageWidth, MobileInputHeight / (float) imageHeight);
-                                matrix.postRotate(needRotateAngle, MobileInputWidth / 2, MobileInputHeight / 2);
-                                matrix.invert(matrix);
-
-                                MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
-
-                            } else if (mSelectedModelIndex == 1) {
-                                // input data format
-                                config.source = MNNImageProcess.Format.YUV_NV21;// input source format
-                                config.dest = MNNImageProcess.Format.BGR;// input data format
-
-                                // matrix transform: dst to src
-                                final Matrix matrix = new Matrix();
-                                matrix.postScale(SqueezeInputWidth / (float) imageWidth, SqueezeInputHeight / (float) imageHeight);
-                                matrix.postRotate(needRotateAngle, SqueezeInputWidth / 2, SqueezeInputWidth / 2);
-                                matrix.invert(matrix);
-
-                                MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
-                            } else if (mSelectedModelIndex == 2) {
-                                // TODO: prepare image for UltraNet
                                 config.mean = new float[] {127f, 127f, 127f};
                                 config.normal = new float[] {1.0f / 128.0f, 1.0f / 128.0f, 1.0f / 128.0f};
                                 config.source = MNNImageProcess.Format.YUV_NV21;// input source format
@@ -434,15 +408,17 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                                         textPaint.setTextSize(30);
 
                                         for (int i = 0; i < faces.length / 5; i++) {
-                                            float x1 = faces[i*5] / UltraInputWidth * canvasWidth;
+                                            // Invert x for front camera image
+                                            float x1 = mCameraView.isFrontCamera() ? canvasWidth - faces[i*5] / UltraInputWidth * canvasWidth : faces[i*5] / UltraInputWidth * canvasWidth;
                                             float y1 = faces[i*5 + 1] / UltraInputHeight * canvasHeight;
-                                            float x2 = faces[i*5 + 2] / UltraInputWidth * canvasWidth;
+                                            // Invert x for front camera image
+                                            float x2 = mCameraView.isFrontCamera() ? canvasWidth - faces[i*5 + 2] / UltraInputWidth * canvasWidth : faces[i*5 + 2] / UltraInputWidth * canvasWidth;
                                             float y2 = faces[i*5 + 3] / UltraInputHeight * canvasHeight;
                                             float scores = faces[i*5 + 4];
 
                                             try {
                                                 canvas.drawRect(x1, y1, x2, y2, rectPaint);
-                                                canvas.drawText(String.format("%.3f", scores), x1, y1, textPaint);
+                                                canvas.drawText(String.format("%.3f", scores), mCameraView.isFrontCamera() ? x2 : x1, y1, textPaint);
                                             } catch (Throwable t) {
                                                 Log.e(Common.TAG, "Draw result error:" + t);
                                             }
@@ -453,8 +429,37 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                                 });
 
                                 return;
+
+                            } else if (mSelectedModelIndex == 0) {
+                                // normalization params
+                                config.mean = new float[]{103.94f, 116.78f, 123.68f};
+                                config.normal = new float[]{0.017f, 0.017f, 0.017f};
+                                config.source = MNNImageProcess.Format.YUV_NV21;// input source format
+                                config.dest = MNNImageProcess.Format.BGR;// input data format
+
+                                // matrix transform: dst to src
+                                Matrix matrix = new Matrix();
+                                matrix.postScale(MobileInputWidth / (float) imageWidth, MobileInputHeight / (float) imageHeight);
+                                matrix.postRotate(needRotateAngle, MobileInputWidth / 2, MobileInputHeight / 2);
+                                matrix.invert(matrix);
+
+                                MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
+
+                            } else if (mSelectedModelIndex == 1) {
+                                // input data format
+                                config.source = MNNImageProcess.Format.YUV_NV21;// input source format
+                                config.dest = MNNImageProcess.Format.BGR;// input data format
+
+                                // matrix transform: dst to src
+                                final Matrix matrix = new Matrix();
+                                matrix.postScale(SqueezeInputWidth / (float) imageWidth, SqueezeInputHeight / (float) imageHeight);
+                                matrix.postRotate(needRotateAngle, SqueezeInputWidth / 2, SqueezeInputWidth / 2);
+                                matrix.invert(matrix);
+
+                                MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
                             }
 
+                            // Clear canvas
                             try {
                                 Canvas canvas = mFaceSurfaceHolder.lockCanvas();
                                 canvas.drawColor( 0, PorterDuff.Mode.CLEAR );
