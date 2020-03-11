@@ -68,7 +68,7 @@ public class MNNNetNative {
     //Face detector helpers
     protected static native long nativeInitFaceDetector(int imageWidth , int imageHeight, int imageChannels);
 
-    protected static native void nativeReleaseFaceDetector(long netPtr);
+    protected static native long nativeReleaseFaceDetector(long netPtr);
 
 
     //Do face detect

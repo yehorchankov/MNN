@@ -456,6 +456,7 @@ extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_taobao_android_mnn_MNNNetNative_nativeReleaseFaceDetector(JNIEnv *env, jclass clazz, jlong netPtr) {
     delete (FaceDetection*) netPtr;
+    return 0;
 }
 
 extern "C"

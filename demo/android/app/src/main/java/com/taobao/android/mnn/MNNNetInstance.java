@@ -116,8 +116,7 @@ public class MNNNetInstance {
         }
 
         public long releaseFd(long faceDetectorPtr) {
-            MNNNetNative.nativeReleaseFaceDetector(faceDetectorPtr);
-            return 0;
+            return MNNNetNative.nativeReleaseFaceDetector(faceDetectorPtr);
         }
 
         public Tensor[] runWithCallback(String[] names) {

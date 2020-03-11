@@ -201,9 +201,6 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
         mInputTensor.reshape(dimensions);
         mSession.reshape();
 
-        if (mFd != 0) {
-            mSession.releaseFd(mFd);
-        }
         mFd = mSession.initFd(320, 240, 3);
 
         mLockUIRender.set(false);
