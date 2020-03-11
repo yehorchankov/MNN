@@ -452,6 +452,11 @@ Java_com_taobao_android_mnn_MNNNetNative_nativeInitFaceDetector(JNIEnv *env, jcl
     return (jlong) fd;
 }
 
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_taobao_android_mnn_MNNNetNative_nativeReleaseFaceDetector(JNIEnv *env, jclass clazz, jlong netPtr) {
+    delete (FaceDetection*) netPtr;
+}
 
 extern "C"
 JNIEXPORT jfloatArray JNICALL

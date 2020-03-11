@@ -115,6 +115,11 @@ public class MNNNetInstance {
             return MNNNetNative.nativeFaceDetect(faceDetectorPtr, scores, boxes);
         }
 
+        public long releaseFd(long faceDetectorPtr) {
+            MNNNetNative.nativeReleaseFaceDetector(faceDetectorPtr);
+            return 0;
+        }
+
         public Tensor[] runWithCallback(String[] names) {
             long[] tensorPtr = new long[names.length];
 

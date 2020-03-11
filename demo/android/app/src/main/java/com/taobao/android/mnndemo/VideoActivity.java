@@ -99,7 +99,7 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
     private final int UltraInputWidth = 320;
     private final int UltraInputHeight = 240;
 
-    private long mFd;
+    private long mFd = 0;
 
     HandlerThread mThread;
     Handler mHandle;
@@ -201,6 +201,9 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
         mInputTensor.reshape(dimensions);
         mSession.reshape();
 
+        if (mFd != 0) {
+            mSession.releaseFd(mFd);
+        }
         mFd = mSession.initFd(320, 240, 3);
 
         mLockUIRender.set(false);
@@ -673,6 +676,9 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
             public void run() {
                 if (mNetInstance != null) {
                     mNetInstance.release();
+                }
+                if (mFd != 0 && mSession != null) {
+                    mFd = mSession.releaseFd(mFd);
                 }
             }
         });
