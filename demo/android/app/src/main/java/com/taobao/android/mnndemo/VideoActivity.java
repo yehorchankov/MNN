@@ -63,11 +63,14 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
 
     private final String UltraNetModelFileName = "UltraNet/slim-320.mnn";
 
+    private final String ShuffleNetModelFileName = "ShuffleNet/shufflenet_64_simple.mnn";
+
     private String mMobileModelPath;
     private List<String> mMobileTaiWords;
     private String mSqueezeModelPath;
     private List<String> mSqueezeTaiWords;
     private String mUltraModelPath;
+    private String mShuffleModelPath;
 
     private int mSelectedModelIndex;// current using modle
     private final MNNNetInstance.Config mConfig = new MNNNetInstance.Config();// session config
@@ -98,6 +101,9 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
 
     private final int UltraInputWidth = 320;
     private final int UltraInputHeight = 240;
+
+    private final int ShuffleInputWidth = 64;
+    private final int ShuffleInputHeight = 64;
 
     private long mFd = 0;
 
@@ -165,6 +171,12 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
             throw new RuntimeException(e);
         }
 
+        mShuffleModelPath = getCacheDir() + "shufflenet_64_simple.mnn";
+        try {
+            Common.copyAssetResource2File(getBaseContext(), ShuffleNetModelFileName, mShuffleModelPath);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -185,6 +197,8 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
             modelPath = mSqueezeModelPath;
         } else if (mSelectedModelIndex == 2) {
             modelPath = mUltraModelPath;
+        } else if (mSelectedModelIndex == 3) {
+            modelPath = mShuffleModelPath;
         }
 
         // create net instance
@@ -457,8 +471,44 @@ public class VideoActivity extends AppCompatActivity implements AdapterView.OnIt
                                 matrix.invert(matrix);
 
                                 MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
-                            }
+                            } else if (mSelectedModelIndex == 3) {
+                                // input data format
+                                config.mean = new float[]{127f, 127f, 127f};
+                                config.normal = new float[]{1.0f / 128.0f, 1.0f / 128.0f, 1.0f / 128.0f};
+                                config.source = MNNImageProcess.Format.YUV_NV21;// input source format
+                                config.dest = MNNImageProcess.Format.BGR;// input data format
+                                config.wrap = MNNImageProcess.Wrap.REPEAT;
+                                config.filter = MNNImageProcess.Filter.BILINEAL;
 
+                                // matrix transform: dst to src
+                                final Matrix matrix = new Matrix();
+                                matrix.postScale(ShuffleInputWidth / (float) imageWidth, ShuffleInputHeight / (float) imageHeight);
+                                matrix.postRotate(needRotateAngle, ShuffleInputWidth / 2, ShuffleInputWidth / 2);
+                                matrix.invert(matrix);
+
+                                MNNImageProcess.convertBuffer(data, imageWidth, imageHeight, mInputTensor, config, matrix);
+
+                                final long startTimestamp = System.nanoTime();
+                                mSession.run();
+                                final long endInferenceTimestamp = System.nanoTime();
+
+                                MNNNetInstance.Session.Tensor scoresOutput = mSession.getOutput(null);
+                                float[] scoresResult = scoresOutput.getFloatData();// get float results
+
+                                inferenceTime.add((endInferenceTimestamp - startTimestamp) / 1000000.0);
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mTimeTextView.setText("");
+                                        mFirstResult.setText(String.format("Inference: %.5f ms", Statistics.mean(inferenceTime)));
+                                        mSecondResult.setText("");
+                                        mThirdResult.setText("");
+                                    }
+                                });
+
+                                return;
+                            }
                             // Clear canvas
                             try {
                                 Canvas canvas = mFaceSurfaceHolder.lockCanvas();

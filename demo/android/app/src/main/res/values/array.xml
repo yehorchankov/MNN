@@ -17,6 +17,7 @@
         <item>MobileNet</item>
         <item>SqueezeNet</item>
         <item>UltraNet</item>
+        <item>ShuffleNet</item>
     </string-array>
     <string-array name="demo_list">
         <item>MoreDemo</item>
