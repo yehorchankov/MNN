@@ -41,7 +41,7 @@ android {
                 jniLibs.srcDirs = ['libs']
             }
             assets {
-                srcDirs = ["../../model", "../../../resource/model"]
+                srcDirs = ["../../model", "../../../resource/model", "../../../resource/images"]
             }
         }
     }
